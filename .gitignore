@@ -1,0 +1,16 @@
+node_modules
+dist
+*.log
+*.tsbuildinfo
+
+# Variáveis locais (use o .env.example como base)
+.env
+.env.*
+!.env.example
+
+# Editor / ferramentas locais
+.claude/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

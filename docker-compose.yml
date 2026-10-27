@@ -1,0 +1,33 @@
+services:
+  app:
+    build: .
+    image: localstack-dynamodb-explorer:latest
+    container_name: dynamodb-explorer
+    ports:
+      - "8080:80"
+    environment:
+      # Padrão: LocalStack já rodando no host na porta 4566.
+      # Com o perfil "localstack" abaixo, use DOCKER_LOCALSTACK_URL=http://localstack:4566
+      # (variável separada de LOCALSTACK_URL do .env, que aponta para localhost e não serve dentro do container)
+      - LOCALSTACK_URL=${DOCKER_LOCALSTACK_URL:-http://host.docker.internal:4566}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  # Opcional — só sobe com: docker compose --profile localstack up -d
+  # (não use se já houver outro LocalStack na porta 4566)
+  localstack:
+    profiles: ["localstack"]
+    image: localstack/localstack:latest
+    container_name: localstack-dynamodb
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=dynamodb
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:-}
+      - PERSISTENCE=1
+    volumes:
+      - localstack-data:/var/lib/localstack
+
+volumes:
+  localstack-data:
