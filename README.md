@@ -1,8 +1,10 @@
 # DynamoDB Explorer · LocalStack
 
-Interface web para navegar e gerenciar as tabelas DynamoDB do LocalStack, no estilo do AWS Console, com melhorias de visualização.
+> Projeto independente da comunidade, sem afiliação com a LocalStack GmbH nem com a Amazon Web Services. "LocalStack", "AWS" e "Amazon DynamoDB" são marcas dos seus respectivos donos e aparecem aqui só para indicar com o que a ferramenta funciona.
 
-**Stack:** Vite · React 19 · TypeScript · Tailwind CSS v4 · lucide-react · AWS SDK v3
+Interface web para navegar e gerenciar as tabelas DynamoDB do LocalStack (e de contas AWS ou do DynamoDB Local), no estilo do AWS Console, com melhorias de visualização. É o projeto irmão do [S3 Explorer](https://github.com/HiagoARJ/S3_Explorer) e do [SES Explorer](https://github.com/HiagoARJ/SES_Explorer), que usam a mesma base visual.
+
+**Stack:** Vite · React 19 · TypeScript · Tailwind CSS v4 · lucide-react · AWS SDK v3 (`client-dynamodb`, `util-dynamodb`)
 
 ## Como rodar
 
@@ -12,7 +14,7 @@ Interface web para navegar e gerenciar as tabelas DynamoDB do LocalStack, no est
 docker compose up -d --build   # http://localhost:8080
 ```
 
-A imagem compila o app e serve com nginx. O nginx também faz o proxy de `/localstack` para o LocalStack do host (`http://host.docker.internal:4566`), então não há problema de CORS. Para apontar para outro endereço, defina `DOCKER_LOCALSTACK_URL` antes do `up`.
+A porta é **8080**. O S3 Explorer usa a 8081 e o SES Explorer a 4568, então os três rodam juntos. A imagem compila o app e serve com nginx. O nginx também faz o proxy de `/localstack` para o LocalStack do host (`http://host.docker.internal:4566`), então não há problema de CORS. Para apontar para outro endereço, defina `DOCKER_LOCALSTACK_URL` antes do `up`.
 
 Se você ainda não tiver um LocalStack, suba também o do compose. A imagem `localstack/localstack:latest` exige um token de licença:
 
@@ -53,6 +55,13 @@ npm run seed            # cria Users, Orders, Products e DeviceEvents com dados 
 npm run seed -- --reset # exclui e recria essas tabelas
 ```
 
+| Tabela | Chaves | O que tem |
+|---|---|---|
+| `Users` | `userId` | 60 usuários com mapas, listas, sets de string, binário, `null` e datas ISO e epoch; GSI `email-index` |
+| `Orders` | `customerId` + `orderId` | pedidos de 25 clientes; GSI `status-createdAt-index` (projeção `INCLUDE`), LSI `customer-total-index` (`KEYS_ONLY`) e TTL no atributo `ttl` |
+| `Products` | `sku` | 40 produtos em modo provisionado (5 RCU / 5 WCU), com sets de string e de número e miniatura binária |
+| `DeviceEvents` | `deviceId` + `timestamp` (número) | eventos de 6 sensores, com stream `NEW_AND_OLD_IMAGES` |
+
 > O seed escreve no LocalStack configurado em `LOCALSTACK_URL`. Ele não toca em tabelas com outros nomes.
 
 ## Funcionalidades
@@ -92,6 +101,16 @@ src/
     layout/     barra lateral, barra superior, configurações e paleta de comandos
     tables/     painel, visão da tabela, visão geral, índices e diálogos de criação
     items/      explorador, construtor de consultas, grid, painel do item, editor e JSON
-    ui/         componentes base (botões, formulários, diálogos etc.)
-scripts/seed.mjs
+    ui/         componentes base (botões, formulários, diálogos etc.), os mesmos dos projetos irmãos
+nginx/default.conf.template
+scripts/seed.mjs  tabelas de exemplo
 ```
+
+## Limitações conhecidas
+
+- Não há PartiQL nem transações (`TransactWriteItems`). As consultas são feitas pelo construtor de Scan e Query.
+- A exportação cobre a página carregada ou os itens selecionados, não a tabela inteira.
+- Salvar um item grava o item completo (`PutItem`). Se outra pessoa alterar o mesmo item enquanto ele está aberto no editor, a alteração dela é sobrescrita.
+- A contagem de itens e o tamanho da tabela vêm do `DescribeTable`. Na AWS, esses números são atualizados só a cada cerca de 6 horas.
+
+Para contribuir, veja o [CONTRIBUTING.md](CONTRIBUTING.md). O histórico de versões está no [CHANGELOG.md](CHANGELOG.md).

@@ -2,6 +2,7 @@
   "name": "localstack-dynamodb-explorer",
   "private": true,
   "version": "1.0.0",
+  "description": "Interface web estilo AWS Console para tabelas e itens DynamoDB do LocalStack, da AWS e do DynamoDB Local",
   "type": "module",
   "scripts": {
     "dev": "vite",
